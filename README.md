@@ -27,8 +27,9 @@ DealBot le fait pour toi, **gratuitement et sans serveur** :
 
 - 🎯 **Tes prix, pas ceux des autres** : chaque composant a son prix plafond. Une RX 9070 à 640 € ? Alerte. À 820 € ? Silence.
 - 🔥 **Les pépites en bonus** : tout deal informatique qui devient « hot » sur Dealabs te remonte aussi, même hors de ta liste.
-- 🧠 **41 cibles prêtes à l'emploi** : cartes graphiques, processeurs AM4/AM5/Intel, RAM, SSD, disques NAS, cartes mères, alimentations, refroidissement, boîtiers, écrans, périphériques, réseau et homelab.
-- 🧹 **Zéro bruit** : PC complets, portables, consoles, accessoires et RAM de portable sont filtrés. Chaque deal n'est notifié qu'une fois.
+- 🧠 **48 cibles prêtes à l'emploi** : cartes graphiques, processeurs AM4/AM5/Intel, RAM, SSD, disques NAS, cartes mères, alimentations, refroidissement, boîtiers, écrans, périphériques, réseau et homelab.
+- 💻 **PC portables toutes marques** : gamers classés par carte graphique (RTX 4050 à 5080), polyvalents fluides (16 Go, Ryzen 5/7, Core i5/i7/Ultra), haut de gamme OLED ou 32 Go, et MacBook Air.
+- 🧹 **Zéro bruit** : PC fixes complets, consoles, Chromebooks, accessoires et RAM de portable sont filtrés, et la « RTX 5070 » d'un portable ne se fait pas passer pour une carte graphique. Chaque deal n'est notifié qu'une fois.
 - ☁️ **Aucun serveur** : tourne sur GitHub Actions toutes les 15 minutes (déclenché par cron-job.org), même PC éteint.
 - 🩺 **Il se surveille tout seul** : s'il ne peut plus lire Dealabs, il te prévient sur Discord avec la marche à suivre, puis quand tout est rétabli.
 - ⚡ **Installation en une commande** sur Windows.
@@ -138,13 +139,16 @@ Tout se passe dans [`config.yaml`](config.yaml), puis `git commit` et `git push`
 
 ```yaml
   - name: AMD Radeon RX 9070
-    category: gpu            # gpu cpu ram ssd hdd mobo psu cooling case screen periph network homelab
+    category: gpu            # gpu cpu ram ssd hdd mobo psu cooling case screen periph network homelab laptop
     max_price: 650           # alerte si prix ≤ 650 €
     min_price: 300           # ignore les accessoires (backplate, support GPU…)
     include: ['\brx ?9070\b(?! ?(xt|gre)\b)']   # au moins un motif doit correspondre
     require: []              # TOUS ces motifs doivent correspondre (ex : capacité 16 Go)
     exclude: []              # un seul suffit à ignorer le deal
 ```
+
+Pour une cible **PC portable**, ajoute `kind: laptop` : elle ne regardera que les deals reconnus comme
+portables (liste `laptop_patterns`), et les cibles composants ignoreront ces deals.
 
 Les motifs sont des regex appliquées au titre **normalisé** : minuscules, sans accents,
 tirets remplacés par des espaces (`Écran RX-9070` → `ecran rx 9070`).

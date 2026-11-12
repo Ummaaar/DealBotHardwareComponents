@@ -59,6 +59,7 @@ CATEGORY_STYLE = {
     "periph": ("⌨️", 0xD6409F),
     "network": ("🌐", 0x00A2C7),
     "homelab": ("📦", 0xA18072),
+    "laptop": ("💻", 0x5B5BD6),
     "pepite": ("🔥", 0xFF6B00),
 }
 DEFAULT_STYLE = ("🛒", 0x5865F2)
@@ -93,6 +94,7 @@ class Target:
     exclude: list[re.Pattern]
     require: list[re.Pattern] = field(default_factory=list)
     min_price: float = 0.0
+    kind: str = "component"  # "component" (ignore les portables) ou "laptop" (portables uniquement)
 
 
 @dataclass
@@ -247,6 +249,7 @@ def load_config(path: Path) -> dict:
     cfg.setdefault("feeds", [{"url": "https://www.dealabs.com/rss/new"},
                              {"url": "https://www.dealabs.com/rss/hot", "hot": True}])
     cfg["_global_exclude"] = compile_patterns(cfg.get("global_exclude"))
+    cfg["_laptop"] = compile_patterns(cfg.get("laptop_patterns"))
     cfg["_targets"] = [
         Target(
             name=t["name"],
@@ -256,6 +259,7 @@ def load_config(path: Path) -> dict:
             include=compile_patterns(t["include"]),
             exclude=compile_patterns(t.get("exclude")),
             require=compile_patterns(t.get("require")),
+            kind=t.get("kind", "component"),
         )
         for t in cfg.get("targets", [])
     ]
@@ -265,6 +269,7 @@ def load_config(path: Path) -> dict:
         "include": compile_patterns(pep.get("include")),
         "exclude": compile_patterns(pep.get("exclude")),
         "min_temperature": int(pep.get("min_temperature", 0)),
+        "include_laptops": bool(pep.get("include_laptops", False)),
     }
     return cfg
 
@@ -276,8 +281,12 @@ def any_match(patterns: list[re.Pattern], text: str) -> bool:
 def evaluate(deal: Deal, cfg: dict) -> Alert | None:
     if any_match(cfg["_global_exclude"], deal.norm):
         return None
+    is_laptop = any_match(cfg["_laptop"], deal.norm)
 
     for t in cfg["_targets"]:
+        # un portable ne doit pas déclencher une cible composant (ex : "RTX 5070" d'un portable)
+        if (t.kind == "laptop") != is_laptop:
+            continue
         if not any_match(t.include, deal.norm) or any_match(t.exclude, deal.norm):
             continue
         # chaque motif "require" doit être présent (ex: modèle + capacité 16 Go)
@@ -291,6 +300,7 @@ def evaluate(deal: Deal, cfg: dict) -> Alert | None:
 
     pep = cfg["_pepites"]
     if (pep["enabled"] and deal.from_hot_feed
+            and (pep["include_laptops"] or not is_laptop)
             and any_match(pep["include"], deal.norm)
             and not any_match(pep["exclude"], deal.norm)
             and (deal.temperature is None or deal.temperature >= pep["min_temperature"])):

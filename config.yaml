@@ -10,6 +10,7 @@
 #   require : TOUS les motifs doivent correspondre (ex : modèle + capacité)
 #   exclude : si UN motif correspond, le deal est ignoré
 #   max_price / min_price : fourchette de prix en € (min_price filtre les accessoires)
+#   kind : "laptop" pour une cible PC portable (sinon cible composant, portables ignorés)
 #
 # Astuces regex : " ?" = espace optionnel, "\b" = limite de mot, "a|b" = a OU b.
 # Les plafonds sont fixés ~10-15 % sous les prix constatés en novembre 2026
@@ -29,19 +30,36 @@ feeds:
   - url: https://www.dealabs.com/rss/hot     # deals devenus "hot" (sert aux pépites)
     hot: true
 
-# Ignoré partout : PC complets, portables, consoles (ils contiennent des noms de composants)
+# Ignoré partout : PC fixes complets, consoles, smartphones, TV
+# (ils contiennent des noms de composants mais ne sont pas des composants)
 global_exclude:
-  - '\bpc (portable|gamer|gaming|fixe|de bureau|complet)\b'
-  - '\b(ordinateur|laptop|notebook|ultrabook|macbook|chromebook)\b'
+  - '\bpc (gamer|gaming)\b(?! portable)'
+  - '\bpc (fixe|de bureau|complet|tour)\b'
+  - '\b(ordinateur (de bureau|fixe|gamer)|unite centrale)\b'
   - '\bconfig(uration)? (gamer|gaming|complete|pc)\b'
   - '\b(ps5|playstation|xbox|nintendo|steam deck|rog ally|legion go)\b'
-  - '\b(smartphone|iphone|ipad|tablette|televiseur|tv)\b'
+  - '\b(smartphone|iphone|ipad|tablette|televiseur|tv|chromebook)\b'
+
+# Ce qui identifie un PC portable : les cibles kind: laptop ne regardent que ces deals,
+# et les cibles composants les ignorent (une "RTX 5070" de portable n'est pas une carte graphique).
+laptop_patterns:
+  - '\b(pc|ordinateur) portable\b'
+  - '\bpc (gamer|gaming) portable\b'
+  - '\b(laptop|notebook|ultrabook|macbook)\b'
+  - '\b(ideapad|thinkpad|thinkbook|lenovo yoga|yoga (slim|pro|[679])|legion (5|7|9|pro|slim)|lenovo loq|loq 15)\b'
+  - '\b(vivobook|zenbook|expertbook|rog (strix|zephyrus|flow)|tuf gaming [af]\d\d)\b'
+  - '\b(acer (swift|aspire|nitro)|nitro v ?1[56]|predator helios)\b'
+  - '\b(hp (pavilion|victus|omen|envy|elitebook|probook)|victus 1[56]|omen (transcend|1[67]))\b'
+  - '\b(inspiron|vostro|dell xps|xps 1[3-6]|alienware [mx]1\d|dell 1[456] plus)\b'
+  - '\bmsi (katana|cyborg|crosshair|pulse|vector|stealth|raider|sword|prestige|modern|thin)\b'
+  - '\b(galaxy book|surface laptop|matebook|gigabyte (aorus|aero|g[56])|aorus 1[5-7])\b'
 
 # Pépites : n'importe quel deal informatique qui devient "hot" sur Dealabs,
 # même s'il ne correspond à aucune cible (te fait découvrir les vraies affaires).
 pepites:
   enabled: true
   min_temperature: 0       # ex: 300 pour ne garder que les deals très bien notés
+  include_laptops: true    # les PC portables devenus hot remontent aussi
   include:
     - '\b(carte graphique|gpu|geforce|radeon|rtx|rx ?\d{4})\b'
     - '\b(processeur|cpu|ryzen|core i[3579]|core ultra)\b'
@@ -50,6 +68,7 @@ pepites:
     - '\b(carte mere|alimentation|ventirad|watercooling|aio|boitier pc)\b'
     - '\b(ecran|moniteur|clavier|souris|webcam|micro usb|casque gaming)\b'
     - '\b(switch (reseau|ethernet|manageable)|routeur|point d.acces|wifi ?7|mini pc|raspberry)\b'
+    - '\b(pc portable|ordinateur portable|laptop|macbook)\b'
   exclude:
     - '\b(coque|housse|film protection|protection ecran)\b'
 
@@ -318,6 +337,68 @@ targets:
     max_price: 75
     min_price: 20
     include: ['\b(clavier mecanique|mechanical keyboard)\b']
+
+  # ------------------------------ PC portables -------------------------------
+  # Gamers : classés par carte graphique (toutes marques)
+  - name: PC portable gamer RTX 4050 / 5050
+    kind: laptop
+    category: laptop
+    max_price: 750
+    min_price: 450
+    include: ['\brtx ?(4050|5050)\b']
+    exclude: ['\b(ecran|moniteur|monitor|sacoche|housse|sac a dos|refroidisseur|station d.accueil|dock|chargeur)\b']
+
+  - name: PC portable gamer RTX 4060 / 5060
+    kind: laptop
+    category: laptop
+    max_price: 950
+    min_price: 550
+    include: ['\brtx ?(4060|5060)\b']
+    exclude: ['\b(ecran|moniteur|monitor|sacoche|housse|sac a dos|refroidisseur|station d.accueil|dock|chargeur)\b']
+
+  - name: PC portable gamer RTX 4070 / 5070
+    kind: laptop
+    category: laptop
+    max_price: 1250
+    min_price: 750
+    include: ['\brtx ?(4070|5070)\b(?! ?ti\b)']
+    exclude: ['\b(ecran|moniteur|monitor|sacoche|housse|sac a dos|refroidisseur|station d.accueil|dock|chargeur)\b']
+
+  - name: PC portable gamer RTX 5070 Ti / 4080 / 5080
+    kind: laptop
+    category: laptop
+    max_price: 1800
+    min_price: 1100
+    include: ['\brtx ?(5070 ?ti|4080|5080)\b']
+    exclude: ['\b(ecran|moniteur|monitor|sacoche|housse|sac a dos|refroidisseur|station d.accueil|dock|chargeur)\b']
+
+  # Polyvalents fluides (type IdeaPad Slim 3 Ryzen 7 / 16 Go) et haut de gamme
+  - name: PC portable haut de gamme (OLED ou 32 Go)
+    kind: laptop
+    category: laptop
+    max_price: 900
+    min_price: 450
+    include: ['\b(ryzen ?(5|7|9|ai)|core ?(i[579]|ultra ?[579])|i[579] ?\d{4,5}[a-z]*|ultra [579] \d{3}|snapdragon x)\b']
+    require: ['\b(oled|32 ?(go|gb))\b']
+    exclude: ['\brtx\b', '\b(sacoche|housse|ecran|moniteur)\b']
+
+  - name: PC portable polyvalent fluide (16 Go)
+    kind: laptop
+    category: laptop
+    max_price: 600
+    min_price: 300
+    include: ['\b(ryzen ?(5|7|9|ai)|core ?(i[579]|ultra ?[579])|i[579] ?\d{4,5}[a-z]*|ultra [579] \d{3}|snapdragon x)\b']
+    require: ['\b(16|24|32) ?(go|gb)\b']
+    exclude: ['\b(rtx|celeron|pentium|athlon|n(100|150|200|305))\b', '\b(sacoche|housse|ecran|moniteur)\b']
+
+  - name: MacBook Air M4 / M5
+    kind: laptop
+    category: laptop
+    max_price: 900
+    min_price: 600
+    include: ['\bmacbook air\b']
+    require: ['\bm[45]\b']
+    exclude: ['\b(coque|housse|sacoche|chargeur)\b']
 
   # ---------------------------- Réseau / homelab -----------------------------
   - name: Switch 2,5 GbE
