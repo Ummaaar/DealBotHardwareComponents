@@ -169,6 +169,34 @@ if ($LASTEXITCODE -ne 0) {
     }
 }
 
+# ---------------------------------------------------------------------------
+Write-Step "Dernière étape (recommandée) : déclenchement fiable avec cron-job.org"
+Write-Host "    La planification intégrée de GitHub n'est pas garantie (elle peut ne jamais démarrer"
+Write-Host "    sur un dépôt neuf). cron-job.org va lancer le bot toutes les 15 min, gratuitement."
+Write-Host ""
+Write-Host "    1) Crée un jeton limité à ce dépôt (la page va s'ouvrir) :" -ForegroundColor Cyan
+Write-Host "       - Expiration : 1 an"
+Write-Host "       - Repository access : Only select repositories > $RepoName"
+Write-Host "       - Permissions > Repository permissions > Actions : Read and write"
+Write-Host "       - Generate token, puis copie-le (github_pat_...)"
+Write-Host ""
+Write-Host "    2) Sur https://cron-job.org > Create cronjob :" -ForegroundColor Cyan
+Write-Host "       URL        : https://api.github.com/repos/$ghUser/$RepoName/actions/workflows/dealbot.yml/dispatches"
+Write-Host "       Fréquence  : toutes les 15 minutes"
+Write-Host "       Avancé > Méthode : POST"
+Write-Host "       Avancé > En-têtes :"
+Write-Host "         Authorization = Bearer <ton jeton>"
+Write-Host "         Accept        = application/vnd.github+json"
+Write-Host "         User-Agent    = cron-dealbot"
+Write-Host "       Avancé > Corps : {""ref"":""main""}"
+Write-Host ""
+Write-Host "    3) Test run : la réponse doit être 204, puis Créer." -ForegroundColor Cyan
+$open = Read-Host "`n    Ouvrir la page de création du jeton maintenant ? [O/n]"
+if ($open -notmatch '^[nN]') {
+    Start-Process "https://github.com/settings/personal-access-tokens/new"
+    Start-Process "https://cron-job.org/en/members/jobs/add/"
+}
+
 Write-Host "`n============================================================" -ForegroundColor Green
 Write-Host " DealBot est en place. Il vérifie Dealabs toutes les 15 minutes." -ForegroundColor Green
 Write-Host " Tes cibles et prix plafonds : config.yaml (git commit + git push après modif)" -ForegroundColor Green

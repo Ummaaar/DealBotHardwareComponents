@@ -2,8 +2,8 @@ name: DealBot
 
 on:
   schedule:
-    - cron: "*/15 * * * *"   # toutes les 15 min (UTC) — GitHub peut décaler de quelques minutes
-  workflow_dispatch:          # bouton "Run workflow" pour lancer à la main
+    - cron: "*/15 * * * *"   # secours : la planification GitHub n'est pas garantie
+  workflow_dispatch:          # déclencheur principal : cron-job.org (voir README) ou bouton "Run workflow"
 
 concurrency:
   group: dealbot
@@ -41,6 +41,7 @@ jobs:
 
       # GitHub met en pause les workflows planifiés après 60 jours sans activité
       # sur le dépôt : réactiver le workflow via l'API remet ce compteur à zéro.
+      # (s'exécute à chaque run, y compris ceux déclenchés par cron-job.org)
       - name: Keepalive
         continue-on-error: true
         env:

@@ -29,7 +29,7 @@ DealBot le fait pour toi, **gratuitement et sans serveur** :
 - 🔥 **Les pépites en bonus** : tout deal informatique qui devient « hot » sur Dealabs te remonte aussi, même hors de ta liste.
 - 🧠 **41 cibles prêtes à l'emploi** : cartes graphiques, processeurs AM4/AM5/Intel, RAM, SSD, disques NAS, cartes mères, alimentations, refroidissement, boîtiers, écrans, périphériques, réseau et homelab.
 - 🧹 **Zéro bruit** : PC complets, portables, consoles, accessoires et RAM de portable sont filtrés. Chaque deal n'est notifié qu'une fois.
-- ☁️ **Aucun serveur** : tourne sur GitHub Actions toutes les 15 minutes, même PC éteint.
+- ☁️ **Aucun serveur** : tourne sur GitHub Actions toutes les 15 minutes (déclenché par cron-job.org), même PC éteint.
 - 🩺 **Il se surveille tout seul** : s'il ne peut plus lire Dealabs, il te prévient sur Discord avec la marche à suivre, puis quand tout est rétabli.
 - ⚡ **Installation en une commande** sur Windows.
 
@@ -60,6 +60,37 @@ Le script installe ce qui manque (Git, GitHub CLI, Python via winget), te connec
 teste ton webhook, crée **ton propre dépôt**, y enregistre le webhook en secret et lance le
 premier passage. Options : `-RepoName mon-dealbot`, `-Private`.
 
+**4. Rends le déclenchement fiable avec cron-job.org (recommandé, 5 min, gratuit)**
+
+La planification intégrée de GitHub (`schedule`) n'est **pas garantie** : sur un dépôt neuf, elle
+peut mettre des heures à démarrer, et GitHub saute des passages quand ses serveurs sont chargés.
+Un service de cron externe qui appelle l'API GitHub toutes les 15 minutes règle le problème.
+La planification GitHub reste active en secours, et l'anti-doublon évite toute alerte en double.
+
+1. Crée un jeton GitHub **limité à ton dépôt** :
+   [github.com/settings/personal-access-tokens/new](https://github.com/settings/personal-access-tokens/new)
+   - *Expiration* : 1 an (note-toi la date pour le renouveler)
+   - *Repository access* : **Only select repositories** → ton dépôt DealBot
+   - *Permissions* → *Repository permissions* → **Actions : Read and write** (rien d'autre)
+   - **Generate token** et copie-le (`github_pat_...`). Ce jeton peut seulement lancer le bot.
+2. Crée un compte gratuit sur [cron-job.org](https://cron-job.org), puis **Create cronjob** :
+
+   | Champ | Valeur |
+   |---|---|
+   | URL | `https://api.github.com/repos/TON-PSEUDO/TON-DEPOT/actions/workflows/dealbot.yml/dispatches` |
+   | Planification | toutes les 15 minutes |
+   | *Advanced* → Méthode | `POST` |
+   | *Advanced* → En-tête `Authorization` | `Bearer github_pat_...` (espace après `Bearer`) |
+   | *Advanced* → En-tête `Accept` | `application/vnd.github+json` |
+   | *Advanced* → En-tête `User-Agent` | `cron-dealbot` |
+   | *Advanced* → Corps | `{"ref":"main"}` |
+
+3. **Test run** : la réponse doit être **204 No Content** (401 = jeton mal collé, 404 = URL ou
+   accès au dépôt, 422 = corps manquant). Puis **Créer**.
+
+> `setup.ps1` affiche ces valeurs déjà remplies pour ton dépôt à la fin de l'installation.
+> Ne publie jamais une capture où ton jeton est visible.
+
 C'est tout : le bot tourne ensuite tout seul toutes les 15 minutes.
 
 <details>
@@ -84,10 +115,13 @@ passe le cron à `*/30` dans `.github/workflows/dealbot.yml`.
 ## Comment ça marche
 
 ```
- toutes les 15 min          ┌──────────────┐   prix ≤ plafond    ┌──────────┐
- GitHub Actions ──────────▶ │   bot.py     │ ──────────────────▶ │ Discord  │
+ cron-job.org ─(15 min)─▶ GitHub Actions          (planification GitHub en secours)
+                               │
+                               ▼
+ Dealabs RSS (new + hot) ─▶ ┌──────────────┐   prix ≤ plafond    ┌──────────┐
+                            │   bot.py     │ ──────────────────▶ │ Discord  │
                             │  filtres +   │   ou deal "hot"     │ webhook  │
- Dealabs RSS (new + hot) ─▶ │  anti-doublon│                     └──────────┘
+                            │  anti-doublon│                     └──────────┘
                             └──────┬───────┘
                                    │ état (deals déjà notifiés)
                                    ▼
@@ -149,7 +183,8 @@ docker compose logs -f
 | Symptôme | Cause / solution |
 |---|---|
 | Message « ⚠️ DealBot a besoin de toi » | Le bot ne lit plus Dealabs depuis ~45 min. Si l'erreur est 403/429, Dealabs bloque GitHub : passe sur l'hébergement Docker. |
-| Aucun run « Scheduled » dans Actions | Sur un dépôt neuf, GitHub met jusqu'à une heure avant le premier passage planifié. |
+| Aucun run automatique dans Actions | La planification GitHub n'est pas fiable : mets en place cron-job.org (étape 4). Les runs déclenchés par cron-job.org apparaissent comme `workflow_dispatch`. |
+| cron-job.org renvoie 401 | Jeton expiré ou mal collé : régénère-le et remets `Bearer github_pat_...`. |
 | Retard de quelques minutes | Normal : le cron GitHub n'est pas précis aux heures chargées. |
 | Une alerte manque | Lance `python bot.py --dry-run -v` pour voir les deals ignorés (prix illisible, filtre trop strict). |
 | Fausse alerte | Ajoute un motif dans `exclude` de la cible, ou dans `global_exclude`. |
