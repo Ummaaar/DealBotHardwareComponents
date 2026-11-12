@@ -42,7 +42,6 @@ jobs:
       # GitHub met en pause les workflows planifiés après 60 jours sans activité
       # sur le dépôt : réactiver le workflow via l'API remet ce compteur à zéro.
       - name: Keepalive
-        if: github.event_name == 'schedule'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
