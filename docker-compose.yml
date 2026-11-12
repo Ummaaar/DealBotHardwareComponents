@@ -1,0 +1,12 @@
+services:
+  dealbot:
+    build: .
+    container_name: dealbot
+    restart: unless-stopped
+    env_file: .env                    # contient DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro   # modifie tes cibles sans reconstruire l'image
+      - dealbot-data:/data
+
+volumes:
+  dealbot-data:
