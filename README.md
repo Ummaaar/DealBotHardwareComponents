@@ -9,6 +9,11 @@ Deux types d'alertes :
 - **Cibles** : un composant précis sous un prix plafond (41 cibles préconfigurées dans `config.yaml`).
 - **Pépites 🔥** : n'importe quel deal informatique qui devient « hot » sur Dealabs, même hors cibles.
 
+Le bot **te prévient lui-même sur Discord** quand il faut intervenir : si Dealabs devient
+illisible ou si le bot plante 3 fois d'affilée (~45 min), tu reçois « ⚠️ DealBot a besoin de toi »
+avec la cause et la marche à suivre (au plus une fois par jour), puis « ✅ fonctionne de nouveau »
+quand ça repart. Le workflow se maintient aussi actif tout seul (pas de pause après 60 jours).
+
 Anti-doublon intégré : chaque deal n'est notifié qu'une fois. Au premier lancement, le bot
 mémorise les deals déjà en ligne **sans les envoyer**, pour ne pas inonder le salon.
 
@@ -142,7 +147,7 @@ L'état anti-doublon est conservé dans le volume `dealbot-data`.
 | Symptôme | Cause / solution |
 |---|---|
 | `flux ignoré ... HTTP Error 403` | Dealabs bloque l'IP des runners GitHub. Passe sur l'hébergement Docker (homelab ou VPS). |
-| Le workflow ne tourne plus | GitHub désactive les workflows planifiés après **60 jours sans activité** sur un dépôt public : un commit ou *Enable workflow* dans l'onglet Actions le relance. |
+| Le workflow ne tourne plus | Normalement évité par l'étape *Keepalive*. Sinon : onglet Actions → *Enable workflow*. |
 | Retard de quelques minutes | Normal : le cron GitHub n'est pas précis aux heures chargées. |
 | Une alerte manque | Le prix doit être lisible (attribut marchand du flux, ou `xx,xx €` dans le titre). Lance `python bot.py --dry-run -v` pour voir les deals ignorés. |
 | Fausse alerte | Ajoute un motif dans `exclude` de la cible, ou dans `global_exclude`. |

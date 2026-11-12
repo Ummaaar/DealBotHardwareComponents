@@ -40,6 +40,8 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/130.0 Safari/537.36 DealBot/1.0"
 )
 STATE_RETENTION_DAYS = 21
+HEALTH_FAIL_THRESHOLD = 3          # échecs consécutifs avant d'alerter (~45 min en GitHub Actions)
+HEALTH_REALERT_SECONDS = 24 * 3600 # au plus une alerte "panne" par jour
 DISCORD_MAX_EMBEDS = 10
 
 CATEGORY_STYLE = {
@@ -198,11 +200,14 @@ def parse_feed(xml_bytes: bytes, hot: bool) -> list[Deal]:
     return deals
 
 
-def load_deals(feeds: list[dict], feed_file: str | None, feed_hot: bool = False) -> list[Deal]:
+def load_deals(feeds: list[dict], feed_file: str | None,
+               feed_hot: bool = False) -> tuple[list[Deal], list[str]]:
+    """Retourne (deals, erreurs). erreurs contient un message par flux en échec."""
     if feed_file:
-        return parse_feed(Path(feed_file).read_bytes(), hot=feed_hot)
+        return parse_feed(Path(feed_file).read_bytes(), hot=feed_hot), []
 
     merged: dict[str, Deal] = {}
+    errors: list[str] = []
     for feed in feeds:
         url, hot = feed["url"], bool(feed.get("hot", False))
         try:
@@ -214,8 +219,9 @@ def load_deals(feeds: list[dict], feed_file: str | None, feed_hot: bool = False)
             log.info("flux OK : %s", url)
         except (RuntimeError, ET.ParseError) as err:
             log.warning("flux ignoré (%s) : %s", url, err)
+            errors.append(f"{url} : {err}")
         time.sleep(1)  # politesse envers Dealabs
-    return list(merged.values())
+    return list(merged.values()), errors
 
 
 # --------------------------------------------------------------------------- #
@@ -377,17 +383,69 @@ def send_alerts(webhook: str, alerts: list[Alert], settings: dict) -> None:
 
 
 # --------------------------------------------------------------------------- #
+# Santé du bot : te prévient sur Discord quand il faut intervenir
+# --------------------------------------------------------------------------- #
+def send_notice(webhook: str | None, settings: dict, title: str, text: str, color: int) -> None:
+    if not webhook:
+        return
+    try:
+        discord_post(webhook, {
+            "username": settings.get("username", "DealBot"),
+            "embeds": [{"title": title[:256], "description": text[:4000], "color": color,
+                        "timestamp": datetime.now(timezone.utc).isoformat()}],
+        })
+    except Exception:  # une notif de santé ne doit jamais faire planter le bot
+        log.exception("impossible d'envoyer la notification de santé")
+
+
+def record_failure(state: dict, webhook: str | None, settings: dict, reason: str) -> None:
+    h = state.setdefault("health", {})
+    h["fail_streak"] = h.get("fail_streak", 0) + 1
+    h["last_error"] = reason[:1500]
+    log.warning("échec n°%d : %s", h["fail_streak"], reason[:300])
+    if h["fail_streak"] < HEALTH_FAIL_THRESHOLD:
+        return
+    if time.time() - h.get("last_down_alert", 0) < HEALTH_REALERT_SECONDS:
+        return
+    hint = ("**Dealabs bloque les serveurs qui font tourner le bot** (erreur 403/429) : "
+            "il faut passer sur l'hébergement Docker (homelab ou VPS), voir le README."
+            if re.search(r"\b(403|429)\b", reason) else
+            "Regarde les logs du dernier run dans l'onglet **Actions** du dépôt GitHub.")
+    send_notice(webhook, settings, "⚠️ DealBot a besoin de toi",
+                f"Le bot échoue depuis {h['fail_streak']} vérifications d'affilée, "
+                f"il ne surveille plus les deals.\n\n{hint}\n\n```\n{reason[:900]}\n```", 0xE5484D)
+    h["last_down_alert"] = time.time()
+    h["down_notified"] = True
+
+
+def record_success(state: dict, webhook: str | None, settings: dict) -> None:
+    h = state.setdefault("health", {})
+    if h.get("down_notified"):
+        send_notice(webhook, settings, "✅ DealBot fonctionne de nouveau",
+                    "La surveillance des deals a repris normalement.", 0x30A46C)
+    state["health"] = {"fail_streak": 0, "last_ok": time.time()}
+
+
+# --------------------------------------------------------------------------- #
 # Exécution
 # --------------------------------------------------------------------------- #
 def run_once(cfg: dict, state_path: Path, webhook: str | None, dry_run: bool,
              feed_file: str | None, feed_hot: bool = False) -> int:
-    state = load_state(state_path)
-    bootstrap = state is None
-    state = state or {"alerted": {}}
+    state = load_state(state_path) or {"alerted": {}}
+    bootstrap = not state.get("bootstrapped") and not state.get("alerted")
     alerted: dict[str, float] = state.setdefault("alerted", {})
 
-    deals = load_deals(cfg["feeds"], feed_file, feed_hot)
+    deals, errors = load_deals(cfg["feeds"], feed_file, feed_hot)
     log.info("%d deals analysés", len(deals))
+
+    if errors and not deals:
+        # aucun flux lisible : on ne fait rien d'autre, on compte la panne
+        if not dry_run:
+            record_failure(state, webhook, cfg["settings"], "\n".join(errors))
+            save_state(state_path, state)
+        return 0
+    if not dry_run and not feed_file:
+        record_success(state, webhook, cfg["settings"])
 
     fresh: list[Alert] = []
     for deal in deals:
@@ -399,6 +457,7 @@ def run_once(cfg: dict, state_path: Path, webhook: str | None, dry_run: bool,
         # Premier lancement : on mémorise l'existant sans spammer le salon.
         for a in fresh:
             alerted[alert_key(a)] = time.time()
+        state["bootstrapped"] = True
         save_state(state_path, state)
         log.info("premier lancement : %d deals existants mémorisés sans notification", len(fresh))
         return 0
@@ -406,6 +465,7 @@ def run_once(cfg: dict, state_path: Path, webhook: str | None, dry_run: bool,
     if not fresh:
         log.info("aucune nouvelle alerte")
         if not dry_run:
+            state["bootstrapped"] = True
             save_state(state_path, state)
         return 0
 
@@ -421,6 +481,7 @@ def run_once(cfg: dict, state_path: Path, webhook: str | None, dry_run: bool,
         return -1
 
     send_alerts(webhook, fresh, cfg["settings"])
+    state["bootstrapped"] = True
     now = time.time()
     for a in fresh:
         alerted[alert_key(a)] = now
@@ -465,8 +526,13 @@ def main() -> int:
     while True:
         try:
             result = run_once(cfg, Path(args.state), webhook, args.dry_run, args.feed_file, args.feed_hot)
-        except Exception:  # en boucle on ne meurt pas sur une erreur réseau ponctuelle
+        except Exception as err:  # en boucle on ne meurt pas sur une erreur ponctuelle
             log.exception("erreur pendant la vérification")
+            if not args.dry_run:
+                st_path = Path(args.state)
+                st = load_state(st_path) or {"alerted": {}}
+                record_failure(st, webhook, cfg["settings"], f"{type(err).__name__}: {err}")
+                save_state(st_path, st)
             if not args.loop:
                 return 1
             result = 0

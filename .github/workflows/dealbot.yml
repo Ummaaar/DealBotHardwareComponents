@@ -11,6 +11,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write   # pour le keepalive ci-dessous
 
 jobs:
   check:
@@ -37,6 +38,15 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python bot.py
+
+      # GitHub met en pause les workflows planifiés après 60 jours sans activité
+      # sur le dépôt : réactiver le workflow via l'API remet ce compteur à zéro.
+      - name: Keepalive
+        if: github.event_name == 'schedule'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/dealbot.yml/enable" --silent
 
       # Sauvegarde l'état pour le prochain run (même si une étape a échoué)
       - uses: actions/cache/save@v4
