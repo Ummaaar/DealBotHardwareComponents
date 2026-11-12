@@ -100,6 +100,13 @@ if (-not (Test-Path .git)) {
     git init -b main | Out-Null
     Write-Ok "Dépôt initialisé"
 }
+# Projet cloné depuis le dépôt d'origine : on garde ce lien sous le nom "upstream"
+# pour que "origin" pointe vers TON propre dépôt.
+$origin = git remote get-url origin 2>$null
+if ($origin -and $origin -notmatch "github\.com[/:]$ghUser/") {
+    git remote rename origin upstream
+    Write-Ok "Dépôt d'origine conservé comme 'upstream' (pour récupérer les mises à jour)"
+}
 if (-not (git config user.name))  { git config user.name  $ghUser }
 if (-not (git config user.email)) { git config user.email "$ghUser@users.noreply.github.com" }
 

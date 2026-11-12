@@ -1,0 +1,39 @@
+<svg xml:space="preserve" xmlns="http://www.w3.org/2000/svg" width="760" height="372" viewBox="0 0 760 372" role="img" aria-label="Exemple d'alertes DealBot dans un salon Discord">
+  <style>
+    text { font-family: "gg sans", "Noto Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+    .name { fill: #f2f3f5; font-size: 16px; font-weight: 600; }
+    .time { fill: #949ba4; font-size: 12px; }
+    .title { fill: #00a8fc; font-size: 15px; font-weight: 600; }
+    .body { fill: #dbdee1; font-size: 14px; }
+    .strong { fill: #f2f3f5; font-weight: 700; }
+    .muted { fill: #b5bac1; }
+    .footer { fill: #b5bac1; font-size: 12px; }
+  </style>
+
+  <rect width="760" height="372" rx="10" fill="#313338"/>
+
+  <!-- auteur -->
+  <circle cx="40" cy="38" r="20" fill="#5865f2"/>
+  <text x="40" y="44" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">DB</text>
+  <text x="72" y="34" class="name">DealBot</text>
+  <rect x="142" y="21" width="34" height="16" rx="3" fill="#5865f2"/>
+  <text x="159" y="33" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">APP</text>
+  <text x="186" y="34" class="time">Aujourd'hui à 09:14</text>
+
+  <!-- alerte cible : carte graphique -->
+  <rect x="72" y="50" width="660" height="134" rx="4" fill="#2b2d31"/>
+  <rect x="72" y="50" width="4" height="134" rx="2" fill="#e5484d"/>
+  <text x="92" y="78" class="title">🎮 ASRock Radeon RX 9070 Challenger 16 Go</text>
+  <text x="92" y="106" class="body">💶 <tspan class="strong">639,99 €</tspan><tspan class="muted" dx="6">·  plafond 650 € (−10,01 €)</tspan></text>
+  <text x="92" y="130" class="body">🏪 Amazon.de</text>
+  <text x="92" y="166" class="footer">AMD Radeon RX 9070 · Dealabs  •  Aujourd'hui à 09:12</text>
+
+  <!-- alerte pépite -->
+  <rect x="72" y="196" width="660" height="158" rx="4" fill="#2b2d31"/>
+  <rect x="72" y="196" width="4" height="158" rx="2" fill="#ff6b00"/>
+  <text x="92" y="224" class="title">🔥 Processeur AMD Ryzen 5 5600XT - 6 Cœurs / 12 Threads, Socket AM4</text>
+  <text x="92" y="252" class="body">💶 <tspan class="strong">99 €</tspan></text>
+  <text x="92" y="276" class="body">🏪 Amazon</text>
+  <text x="92" y="300" class="body">🔥 173° sur Dealabs</text>
+  <text x="92" y="336" class="footer">Pépite informatique (deal hot) · Dealabs  •  Aujourd'hui à 08:47</text>
+</svg>

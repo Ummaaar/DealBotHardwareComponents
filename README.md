@@ -1,130 +1,135 @@
-# DealBot — alertes Dealabs → Discord
+<div align="center">
 
-Surveille les flux RSS de Dealabs et poste dans un salon Discord dès qu'un composant
-passe **sous ton prix plafond** : cartes graphiques, processeurs, RAM, SSD, disques NAS,
-cartes mères, alimentations, refroidissement, boîtiers, écrans, périphériques, réseau et homelab.
+# 🛒 DealBot Hardware Components
 
-Deux types d'alertes :
+**Reçois sur Discord les bons plans Dealabs dès qu'un composant PC passe sous TON prix.**
 
-- **Cibles** : un composant précis sous un prix plafond (41 cibles préconfigurées dans `config.yaml`).
-- **Pépites 🔥** : n'importe quel deal informatique qui devient « hot » sur Dealabs, même hors cibles.
+[![DealBot](https://github.com/Ummaaar/DealBotHardwareComponents/actions/workflows/dealbot.yml/badge.svg)](https://github.com/Ummaaar/DealBotHardwareComponents/actions/workflows/dealbot.yml)
+![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/h%C3%A9bergement-GitHub%20Actions%20gratuit-2088FF?logo=githubactions&logoColor=white)
+![Docker](https://img.shields.io/badge/option-Docker-2496ED?logo=docker&logoColor=white)
+[![Licence MIT](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
 
-Le bot **te prévient lui-même sur Discord** quand il faut intervenir : si Dealabs devient
-illisible ou si le bot plante 3 fois d'affilée (~45 min), tu reçois « ⚠️ DealBot a besoin de toi »
-avec la cause et la marche à suivre (au plus une fois par jour), puis « ✅ fonctionne de nouveau »
-quand ça repart. Le workflow se maintient aussi actif tout seul (pas de pause après 60 jours).
+<img src="docs/alerte-discord.svg" alt="Exemple d'alertes DealBot dans un salon Discord" width="720">
 
-Anti-doublon intégré : chaque deal n'est notifié qu'une fois. Au premier lancement, le bot
-mémorise les deals déjà en ligne **sans les envoyer**, pour ne pas inonder le salon.
+<sub>Exemple d'alertes : une cible sous son prix plafond, et une « pépite » devenue hot sur Dealabs.</sub>
 
-```
-dealbot/
-├── bot.py                        # le bot (Python 3.10+, stdlib + PyYAML)
-├── config.yaml                   # tes cibles et prix plafonds
-├── requirements.txt
-├── .github/workflows/dealbot.yml # exécution toutes les 15 min sur GitHub Actions
-├── setup.ps1                     # installation automatique (Windows)
-├── Dockerfile / docker-compose.yml  # option : hébergement sur homelab / VPS
-└── .gitignore
-```
+</div>
 
 ---
 
-## Installation express (Windows)
+## Pourquoi ce bot ?
 
-1. Crée le webhook Discord (étape 1 ci-dessous) et copie son URL.
-2. Dans le dossier du projet, lance :
+Avec la pénurie de mémoire, les prix des composants bougent tous les jours et les vrais bons plans
+partent en quelques heures. Surveiller Dealabs à la main, c'est rater la moitié des affaires.
+
+DealBot le fait pour toi, **gratuitement et sans serveur** :
+
+- 🎯 **Tes prix, pas ceux des autres** : chaque composant a son prix plafond. Une RX 9070 à 640 € ? Alerte. À 820 € ? Silence.
+- 🔥 **Les pépites en bonus** : tout deal informatique qui devient « hot » sur Dealabs te remonte aussi, même hors de ta liste.
+- 🧠 **41 cibles prêtes à l'emploi** : cartes graphiques, processeurs AM4/AM5/Intel, RAM, SSD, disques NAS, cartes mères, alimentations, refroidissement, boîtiers, écrans, périphériques, réseau et homelab.
+- 🧹 **Zéro bruit** : PC complets, portables, consoles, accessoires et RAM de portable sont filtrés. Chaque deal n'est notifié qu'une fois.
+- ☁️ **Aucun serveur** : tourne sur GitHub Actions toutes les 15 minutes, même PC éteint.
+- 🩺 **Il se surveille tout seul** : s'il ne peut plus lire Dealabs, il te prévient sur Discord avec la marche à suivre, puis quand tout est rétabli.
+- ⚡ **Installation en une commande** sur Windows.
+
+## Installation express (Windows, ~5 min)
+
+**1. Crée le webhook Discord**
+
+Clic droit sur ton salon → **Modifier le salon** → **Intégrations** → **Webhooks** → **Nouveau webhook** → **Copier l'URL du webhook**.
+
+> ⚠️ Cette URL est un secret : toute personne qui l'a peut poster dans ton salon. Ne la mets jamais dans le code.
+
+**2. Récupère le projet**
+
+En haut de cette page : **Code** → **Download ZIP**, puis décompresse-le. Ou, si Git est installé :
+
+```powershell
+git clone https://github.com/Ummaaar/DealBotHardwareComponents.git
+cd DealBotHardwareComponents
+```
+
+**3. Lance l'installation**
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 ```
 
-Le script installe les outils manquants (Git, GitHub CLI, Python via winget), te connecte à
-GitHub, teste le webhook, crée le dépôt public, enregistre le secret et lance le premier run.
-Option : `-RepoName autre-nom` ou `-Private`.
+Le script installe ce qui manque (Git, GitHub CLI, Python via winget), te connecte à GitHub,
+teste ton webhook, crée **ton propre dépôt**, y enregistre le webhook en secret et lance le
+premier passage. Options : `-RepoName mon-dealbot`, `-Private`.
 
-## Mise en place manuelle (GitHub Actions, gratuit)
+C'est tout : le bot tourne ensuite tout seul toutes les 15 minutes.
 
-### 1. Créer le webhook Discord
-
-1. Crée un serveur Discord perso (bouton **+** → *Créer le mien*) et un salon `#bons-plans`.
-2. Clic droit sur le salon → **Modifier le salon** → **Intégrations** → **Webhooks** → **Nouveau webhook**.
-3. Renomme-le (ex. *DealBot*), puis **Copier l'URL du webhook**.
-
-> ⚠️ Cette URL est un secret : toute personne qui l'a peut poster dans ton salon.
-> Ne la mets jamais dans le code ni dans un commit.
-
-### 2. Créer le dépôt GitHub
-
-Dépôt **public** = minutes GitHub Actions illimitées (l'URL du webhook reste dans les secrets).
+<details>
+<summary><b>Installation manuelle (Linux, macOS, ou sans le script)</b></summary>
 
 ```bash
-cd dealbot
-git init -b main
-git add .
-git commit -m "DealBot : alertes Dealabs vers Discord"
-gh repo create dealbot --public --source=. --push   # ou crée le dépôt sur github.com puis git remote add + git push
+git clone https://github.com/Ummaaar/DealBotHardwareComponents.git dealbot && cd dealbot
+git remote rename origin upstream
+gh repo create mon-dealbot --public --source=. --remote=origin --push
+gh secret set DISCORD_WEBHOOK_URL          # colle l'URL du webhook
+gh workflow run dealbot.yml
 ```
 
-### 3. Ajouter le secret
+Sans GitHub CLI : crée un dépôt public sur github.com, pousse le code, puis ajoute le secret dans
+**Settings → Secrets and variables → Actions → New repository secret** (`DISCORD_WEBHOOK_URL`),
+et lance **Actions → DealBot → Run workflow**.
 
-Sur GitHub : **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+Un dépôt **public** a des minutes GitHub Actions illimitées. En privé (~2 000 min/mois),
+passe le cron à `*/30` dans `.github/workflows/dealbot.yml`.
+</details>
 
-| Name | Secret |
-|---|---|
-| `DISCORD_WEBHOOK_URL` | l'URL copiée à l'étape 1 |
+## Comment ça marche
 
-Ou en ligne de commande : `gh secret set DISCORD_WEBHOOK_URL`
-
-### 4. Lancer et vérifier
-
-1. Onglet **Actions** → workflow **DealBot** → **Run workflow**.
-2. Ouvre le run → étape *Vérifier les deals*. Tu dois voir :
-   - `flux OK : https://www.dealabs.com/rss/new` (et `/rss/hot`)
-   - `XX deals analysés`
-   - `premier lancement : N deals existants mémorisés sans notification`
-3. Ensuite, le bot tourne tout seul toutes les 15 minutes.
-
-Tester l'envoi Discord depuis ton PC :
-
-```powershell
-# PowerShell
-$env:DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/..."
-pip install -r requirements.txt
-python bot.py --test-webhook
+```
+ toutes les 15 min          ┌──────────────┐   prix ≤ plafond    ┌──────────┐
+ GitHub Actions ──────────▶ │   bot.py     │ ──────────────────▶ │ Discord  │
+                            │  filtres +   │   ou deal "hot"     │ webhook  │
+ Dealabs RSS (new + hot) ─▶ │  anti-doublon│                     └──────────┘
+                            └──────┬───────┘
+                                   │ état (deals déjà notifiés)
+                                   ▼
+                          cache GitHub Actions
 ```
 
----
+- Le bot lit uniquement les **flux RSS publics** de Dealabs (2 requêtes par passage) : pas d'extraction de pages, pas de compte.
+- Le prix vient du marchand indiqué dans le flux, avec repli sur le prix écrit dans le titre.
+- Au **premier lancement**, il mémorise les deals déjà en ligne sans les envoyer, pour ne pas inonder ton salon.
 
-## Personnaliser les cibles
+## Personnaliser tes cibles
 
-Tout se passe dans `config.yaml`. Exemple :
+Tout se passe dans [`config.yaml`](config.yaml), puis `git commit` et `git push`.
 
 ```yaml
   - name: AMD Radeon RX 9070
     category: gpu            # gpu cpu ram ssd hdd mobo psu cooling case screen periph network homelab
-    max_price: 650           # alerte si prix <= 650 €
-    min_price: 300           # ignore les accessoires (backplate, support GPU...)
-    include: ['\brx ?9070\b(?! ?(xt|gre)\b)']   # au moins un motif doit matcher
-    require: []              # TOUS ces motifs doivent matcher (ex : capacité 16 Go)
+    max_price: 650           # alerte si prix ≤ 650 €
+    min_price: 300           # ignore les accessoires (backplate, support GPU…)
+    include: ['\brx ?9070\b(?! ?(xt|gre)\b)']   # au moins un motif doit correspondre
+    require: []              # TOUS ces motifs doivent correspondre (ex : capacité 16 Go)
     exclude: []              # un seul suffit à ignorer le deal
 ```
 
 Les motifs sont des regex appliquées au titre **normalisé** : minuscules, sans accents,
 tirets remplacés par des espaces (`Écran RX-9070` → `ecran rx 9070`).
 
-Tester une modif sans rien envoyer :
+Réglages utiles dans `settings` et `pepites` :
+
+| Option | Effet |
+|---|---|
+| `mention: "@here"` | notification forte sur ton téléphone |
+| `notify_on_first_run: true` | envoie aussi les deals déjà en ligne au premier lancement |
+| `pepites.min_temperature: 300` | ne garde que les pépites très bien notées |
+| `pepites.enabled: false` | désactive les pépites |
+
+Tester une modification sans rien envoyer :
 
 ```bash
+pip install -r requirements.txt
 python bot.py --dry-run -v
 ```
-
-Options utiles dans `settings` :
-
-- `mention: "@here"` pour une notification forte sur ton téléphone ;
-- `notify_on_first_run: true` pour recevoir aussi les deals déjà en ligne au premier lancement.
-
----
 
 ## Option : héberger sur ton homelab ou un VPS
 
@@ -138,19 +143,34 @@ docker compose logs -f
 ```
 
 `config.yaml` est monté en lecture seule : modifie-le puis `docker compose restart`.
-L'état anti-doublon est conservé dans le volume `dealbot-data`.
-
----
 
 ## Dépannage
 
 | Symptôme | Cause / solution |
 |---|---|
-| `flux ignoré ... HTTP Error 403` | Dealabs bloque l'IP des runners GitHub. Passe sur l'hébergement Docker (homelab ou VPS). |
-| Le workflow ne tourne plus | Normalement évité par l'étape *Keepalive*. Sinon : onglet Actions → *Enable workflow*. |
+| Message « ⚠️ DealBot a besoin de toi » | Le bot ne lit plus Dealabs depuis ~45 min. Si l'erreur est 403/429, Dealabs bloque GitHub : passe sur l'hébergement Docker. |
+| Aucun run « Scheduled » dans Actions | Sur un dépôt neuf, GitHub met jusqu'à une heure avant le premier passage planifié. |
 | Retard de quelques minutes | Normal : le cron GitHub n'est pas précis aux heures chargées. |
-| Une alerte manque | Le prix doit être lisible (attribut marchand du flux, ou `xx,xx €` dans le titre). Lance `python bot.py --dry-run -v` pour voir les deals ignorés. |
+| Une alerte manque | Lance `python bot.py --dry-run -v` pour voir les deals ignorés (prix illisible, filtre trop strict). |
 | Fausse alerte | Ajoute un motif dans `exclude` de la cible, ou dans `global_exclude`. |
 
-Le bot ne lit que les flux RSS publics de Dealabs (2 requêtes toutes les 15 min) : aucune
-extraction de pages, aucune connexion à un compte.
+## Structure
+
+```
+├── bot.py                         # le bot (Python 3.10+, stdlib + PyYAML)
+├── config.yaml                    # cibles, prix plafonds, filtres
+├── setup.ps1                      # installation automatique (Windows)
+├── .github/workflows/dealbot.yml  # exécution toutes les 15 min + keepalive
+├── Dockerfile, docker-compose.yml # hébergement homelab / VPS
+└── docs/alerte-discord.svg        # aperçu des alertes
+```
+
+## Contribuer
+
+Une cible manquante, un faux positif, une idée ? Ouvre une **issue** ou une **pull request**.
+Et si le bot t'a fait économiser quelques euros, une ⭐ fait toujours plaisir.
+
+## Licence
+
+[MIT](LICENSE) : libre d'utilisation, de modification et de partage. DealBot n'est pas affilié à
+Dealabs ni à Discord.

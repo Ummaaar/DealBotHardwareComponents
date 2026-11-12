@@ -77,6 +77,7 @@ class Deal:
     published: datetime | None
     description: str = ""
     from_hot_feed: bool = False
+    temperature: int | None = None
     norm: str = field(init=False)
 
     def __post_init__(self) -> None:
@@ -142,6 +143,9 @@ def parse_price(raw: str | None) -> float | None:
     return value if 0 < value < 100_000 else None
 
 
+TEMP_PREFIX_RE = re.compile(r"^\s*(-?\d{1,5})\s*°\s*[-–—:]?\s*")
+
+
 def strip_html(html: str) -> str:
     return re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]+>", " ", html or ""))).strip()
 
@@ -195,8 +199,14 @@ def parse_feed(xml_bytes: bytes, hot: bool) -> list[Deal]:
         if price is None:
             price = parse_price(title) or parse_price(strip_html(description)[:300])
 
+        # Les flux "hot" préfixent le titre par la température : "173° - Processeur ..."
+        temperature = None
+        if (tm := TEMP_PREFIX_RE.match(title)):
+            temperature = int(tm.group(1))
+            title = title[tm.end():].strip()
+
         if title and link:
-            deals.append(Deal(guid, title, link, price, merchant, published, description, hot))
+            deals.append(Deal(guid, title, link, price, merchant, published, description, hot, temperature))
     return deals
 
 
@@ -254,6 +264,7 @@ def load_config(path: Path) -> dict:
         "enabled": bool(pep.get("enabled", False)),
         "include": compile_patterns(pep.get("include")),
         "exclude": compile_patterns(pep.get("exclude")),
+        "min_temperature": int(pep.get("min_temperature", 0)),
     }
     return cfg
 
@@ -281,7 +292,8 @@ def evaluate(deal: Deal, cfg: dict) -> Alert | None:
     pep = cfg["_pepites"]
     if (pep["enabled"] and deal.from_hot_feed
             and any_match(pep["include"], deal.norm)
-            and not any_match(pep["exclude"], deal.norm)):
+            and not any_match(pep["exclude"], deal.norm)
+            and (deal.temperature is None or deal.temperature >= pep["min_temperature"])):
         return Alert(deal, "pepite", "Pépite informatique (deal hot)", "pepite")
     return None
 
@@ -330,7 +342,9 @@ def build_embed(alert: Alert) -> dict:
         lines.append(price_line)
     if d.merchant:
         lines.append(f"🏪 {d.merchant}")
-    if d.from_hot_feed:
+    if d.temperature is not None:
+        lines.append(f"🔥 {d.temperature}° sur Dealabs")
+    elif d.from_hot_feed:
         lines.append("🔥 Deal hot sur Dealabs")
     embed = {
         "title": f"{emoji} {d.title}"[:256],

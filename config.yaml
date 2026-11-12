@@ -40,6 +40,7 @@ global_exclude:
 # même s'il ne correspond à aucune cible (te fait découvrir les vraies affaires).
 pepites:
   enabled: true
+  min_temperature: 0       # ex: 300 pour ne garder que les deals très bien notés
   include:
     - '\b(carte graphique|gpu|geforce|radeon|rtx|rx ?\d{4})\b'
     - '\b(processeur|cpu|ryzen|core i[3579]|core ultra)\b'
