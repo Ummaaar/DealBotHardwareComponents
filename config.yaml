@@ -12,8 +12,9 @@
 #   max_price / min_price : fourchette de prix en € (min_price filtre les accessoires)
 #
 # Astuces regex : " ?" = espace optionnel, "\b" = limite de mot, "a|b" = a OU b.
-# Les plafonds sont des "bons prix" en contexte de pénurie mémoire (fin 2026) :
-# ajuste-les selon le marché.
+# Les plafonds sont fixés ~10-15 % sous les prix constatés en novembre 2026
+# (pénurie de mémoire) : de vraies bonnes affaires, mais atteignables.
+# Ajuste-les quand le marché bouge.
 # =============================================================================
 
 settings:
@@ -60,107 +61,107 @@ targets:
   # ---------------------------- Cartes graphiques ----------------------------
   - name: AMD Radeon RX 9070
     category: gpu
-    max_price: 650
+    max_price: 720
     min_price: 300
     include: ['\brx ?9070\b(?! ?(xt|gre)\b)']
 
   - name: AMD Radeon RX 9070 GRE
     category: gpu
-    max_price: 550
+    max_price: 600
     min_price: 250
     include: ['\brx ?9070 ?gre\b']
 
   - name: AMD Radeon RX 9070 XT
     category: gpu
-    max_price: 750
+    max_price: 850
     min_price: 350
     include: ['\brx ?9070 ?xt\b']
 
   - name: AMD Radeon RX 9060 XT 16 Go
     category: gpu
-    max_price: 450
+    max_price: 500
     min_price: 200
     include: ['\brx ?9060 ?xt\b']
     require: ['\b16 ?(go|gb)\b']
 
   - name: NVIDIA RTX 5060 Ti 16 Go
     category: gpu
-    max_price: 550
+    max_price: 620
     min_price: 250
     include: ['\brtx ?5060 ?ti\b']
     require: ['\b16 ?(go|gb)\b']
 
   - name: NVIDIA RTX 5070
     category: gpu
-    max_price: 650
+    max_price: 720
     min_price: 300
     include: ['\brtx ?5070\b(?! ?ti\b)']
 
   - name: NVIDIA RTX 5070 Ti
     category: gpu
-    max_price: 850
+    max_price: 950
     min_price: 450
     include: ['\brtx ?5070 ?ti\b']
 
   # ------------------------------- Processeurs -------------------------------
   - name: Ryzen 7 5800X3D (AM4)
     category: cpu
-    max_price: 300
+    max_price: 330
     min_price: 120
     include: ['\b5800 ?x3d\b']
 
   - name: Ryzen 7 5700X3D (AM4)
     category: cpu
-    max_price: 220
+    max_price: 250
     min_price: 100
     include: ['\b5700 ?x3d\b']
 
   - name: Ryzen 9 5950X (AM4)
     category: cpu
-    max_price: 280
+    max_price: 300
     min_price: 120
     include: ['\b5950 ?x\b']
 
   - name: Ryzen 9 5900X / 5900XT (AM4)
     category: cpu
-    max_price: 220
+    max_price: 240
     min_price: 100
     include: ['\b5900 ?xt?\b']
 
   - name: Ryzen 7 7800X3D (AM5)
     category: cpu
-    max_price: 380
+    max_price: 420
     min_price: 200
     include: ['\b7800 ?x3d\b']
 
   - name: Ryzen 7 9800X3D (AM5)
     category: cpu
-    max_price: 450
+    max_price: 490
     min_price: 250
     include: ['\b9800 ?x3d\b']
 
   - name: Ryzen 5 7600 / 7600X (AM5)
     category: cpu
-    max_price: 170
+    max_price: 190
     min_price: 80
     include: ['\b(ryzen ?5|r5) ?7600 ?x?\b']
 
   - name: Ryzen 5 9600X (AM5)
     category: cpu
-    max_price: 190
+    max_price: 210
     min_price: 90
     include: ['\b(ryzen ?5|r5) ?9600 ?x?\b']
 
   - name: Intel Core i5-14600K / KF (LGA1700)
     category: cpu
-    max_price: 220
+    max_price: 240
     min_price: 100
     include: ['\b14600 ?kf?\b']
 
   # ----------------------------------- RAM -----------------------------------
   - name: DDR4 32 Go (2x16)
     category: ram
-    max_price: 110
+    max_price: 150
     min_price: 30
     include: ['\bddr4\b']
     require: ['\b(32 ?(go|gb)|2 ?x ?16 ?(go|gb)?)\b']
@@ -168,7 +169,7 @@ targets:
 
   - name: DDR5 32 Go (2x16)
     category: ram
-    max_price: 140
+    max_price: 220
     min_price: 40
     include: ['\bddr5\b']
     require: ['\b(32 ?(go|gb)|2 ?x ?16 ?(go|gb)?)\b']
@@ -176,7 +177,7 @@ targets:
 
   - name: DDR5 64 Go (2x32)
     category: ram
-    max_price: 260
+    max_price: 420
     min_price: 80
     include: ['\bddr5\b']
     require: ['\b(64 ?(go|gb)|2 ?x ?32 ?(go|gb)?)\b']
@@ -185,7 +186,7 @@ targets:
   # ------------------------------- SSD NVMe ----------------------------------
   - name: SSD NVMe 1 To
     category: ssd
-    max_price: 75
+    max_price: 95
     min_price: 30
     include: ['\b(nvme|m\.2|ssd)\b']
     require: ['\b1 ?(to|tb)\b']
@@ -193,7 +194,7 @@ targets:
 
   - name: SSD NVMe 2 To
     category: ssd
-    max_price: 140
+    max_price: 170
     min_price: 60
     include: ['\b(nvme|m\.2|ssd)\b']
     require: ['\b2 ?(to|tb)\b']
@@ -201,7 +202,7 @@ targets:
 
   - name: SSD NVMe 4 To
     category: ssd
-    max_price: 280
+    max_price: 340
     min_price: 120
     include: ['\b(nvme|m\.2|ssd)\b']
     require: ['\b4 ?(to|tb)\b']
@@ -210,7 +211,7 @@ targets:
   # ------------------------- Disques durs (NAS / lab) ------------------------
   - name: Disque dur NAS 8 To et plus
     category: hdd
-    max_price: 170
+    max_price: 210
     min_price: 80
     include: ['\b(ironwolf|wd red|red plus|red pro|n300|exos|ultrastar|disque dur)\b']
     require: ['\b(8|10|12|14|16|18|20|22|24) ?(to|tb)\b']
@@ -219,26 +220,26 @@ targets:
   # ------------------------------ Cartes mères -------------------------------
   - name: Carte mère AM4 B550
     category: mobo
-    max_price: 90
+    max_price: 110
     min_price: 50
     include: ['\bb550m?\b']
 
   - name: Carte mère AM5 B650 / B850
     category: mobo
-    max_price: 140
+    max_price: 160
     min_price: 70
     include: ['\bb(650|850)[em]?\b']
 
   - name: Carte mère AM5 X670 / X870
     category: mobo
-    max_price: 220
+    max_price: 260
     min_price: 120
     include: ['\bx(670|870)e?\b']
 
   # ------------------------------ Alimentations ------------------------------
   - name: Alimentation 750 W
     category: psu
-    max_price: 85
+    max_price: 95
     min_price: 40
     include: ['\b750 ?w\b']
     require: ['\b(alim|alimentation|psu|80 ?(plus|\+)|gold|platinum)\b']
@@ -246,7 +247,7 @@ targets:
 
   - name: Alimentation 850 W
     category: psu
-    max_price: 105
+    max_price: 120
     min_price: 50
     include: ['\b850 ?w\b']
     require: ['\b(alim|alimentation|psu|80 ?(plus|\+)|gold|platinum)\b']
@@ -254,7 +255,7 @@ targets:
 
   - name: Alimentation 1000 W
     category: psu
-    max_price: 150
+    max_price: 170
     min_price: 70
     include: ['\b1000 ?w\b']
     require: ['\b(alim|alimentation|psu|80 ?(plus|\+)|gold|platinum)\b']
@@ -263,27 +264,27 @@ targets:
   # ----------------------------- Refroidissement -----------------------------
   - name: Ventirad (double tour / milieu de gamme)
     category: cooling
-    max_price: 45
+    max_price: 50
     min_price: 15
     include: ['\b(ventirad|peerless assassin|phantom spirit|dark rock|ak ?620|ak ?400|fuma|nh ?d15|nh ?u12)\b']
 
   - name: Watercooling AIO 360 mm
     category: cooling
-    max_price: 90
+    max_price: 110
     min_price: 40
     include: ['\b(aio|watercooling|water cooling|refroidissement liquide|liquid freezer)\b']
     require: ['\b360\b']
 
   - name: Pâte thermique / PTM7950
     category: cooling
-    max_price: 8
+    max_price: 12
     min_price: 1
     include: ['\b(pate thermique|thermal paste|mx ?[46]|kryonaut|ptm ?7950|nt ?h[12])\b']
 
   # --------------------------------- Boîtiers --------------------------------
   - name: Boîtier PC
     category: case
-    max_price: 60
+    max_price: 75
     min_price: 25
     include: ['\bboitier\b']
     require: ['\b(pc|atx|gaming|tour|airflow)\b']
@@ -292,7 +293,7 @@ targets:
   # --------------------------------- Écrans ----------------------------------
   - name: Écran 1440p 144 Hz+
     category: screen
-    max_price: 200
+    max_price: 230
     min_price: 100
     include: ['\b(ecran|moniteur|monitor)\b']
     require: ['\b(1440p|qhd|wqhd|2560 ?x ?1440)\b', '\b(1(44|65|70|80)|2\d\d) ?hz\b']
@@ -300,7 +301,7 @@ targets:
 
   - name: Écran OLED 1440p
     category: screen
-    max_price: 500
+    max_price: 600
     min_price: 250
     include: ['\b(qd ?)?oled\b']
     require: ['\b(ecran|moniteur|monitor)\b', '\b(1440p|qhd|wqhd|2560)\b']
@@ -308,20 +309,20 @@ targets:
   # ------------------------------- Périphériques -----------------------------
   - name: Souris gaming haut de gamme
     category: periph
-    max_price: 90
+    max_price: 110
     min_price: 30
     include: ['\b(superlight|g pro x|viper v[23]|deathadder v[34]|lamzu|pulsar x2|razer viper)\b']
 
   - name: Clavier mécanique
     category: periph
-    max_price: 60
+    max_price: 75
     min_price: 20
     include: ['\b(clavier mecanique|mechanical keyboard)\b']
 
   # ---------------------------- Réseau / homelab -----------------------------
   - name: Switch 2,5 GbE
     category: network
-    max_price: 60
+    max_price: 70
     min_price: 20
     include: ['\bswitch\b']
     require: ['\b(2[.,]5 ?(g|gb|gbe|gbit|gbps)|2500 ?(mbps|base))\b']
@@ -329,20 +330,20 @@ targets:
 
   - name: Mini PC Intel N100 / N150 / N305
     category: homelab
-    max_price: 160
+    max_price: 190
     min_price: 70
     include: ['\b(mini ?pc|nuc)\b']
     require: ['\b(n97|n100|n150|n200|n305|n355)\b']
 
   - name: Mini PC Ryzen
     category: homelab
-    max_price: 350
+    max_price: 420
     min_price: 150
     include: ['\b(mini ?pc|nuc)\b']
     require: ['\bryzen\b']
 
   - name: Raspberry Pi 5
     category: homelab
-    max_price: 80
+    max_price: 95
     min_price: 40
     include: ['\braspberry pi ?5\b']
